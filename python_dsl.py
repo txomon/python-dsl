@@ -167,6 +167,19 @@ default_validation_schema.update({
         'type': 'list',
         'items': []
     },
+    'ImportFrom': {
+        'type': 'list',
+        'items': []
+    },
+    'alias': {
+        'type': 'list',
+        'items': []
+    },
+    # Python2 compatibility
+    'Print': {
+        'type': 'list',
+        'items': []
+    },
     # We control functions to be used here
     'Call': {
         'type': 'list',
@@ -181,84 +194,23 @@ default_validation_schema.update({
                             'type': 'dict',
                             'schema': {
                                 'id': {
-                                    'oneof': [  # Avoid redefinition of allowed functions
-                                        {
-                                            'type': 'string',
-                                            'allowed': [],  # Defined functions
-                                        },
-                                        {
-                                            'type': 'string',
-                                            'allowed': [  # Allowed functions
-                                                'abs',
-                                                'all',
-                                                'any',
-                                                'ascii',
-                                                'bin',
-                                                'bool',
-                                                'bytearray',
-                                                'bytes',
-                                                'callable',
-                                                'chr',
-                                                'classmethod',
-                                                # 'compile', # Lets you do nasty things
-                                                'complex',
-                                                # 'delattr', # Can be used to do __ thingies
-                                                'dict',
-                                                # 'dir', # No instrospection
-                                                'divmod',
-                                                'enumerate',
-                                                # 'eval', # No random string evaluation
-                                                # 'exec', # No execution
-                                                'filter',
-                                                'float',
-                                                'format',
-                                                'frozenset',
-                                                # 'getattr', # Can be used for __ thingies
-                                                # 'globals',  # Not needed
-                                                'hasattr',  # Mixed feelings
-                                                'hash',
-                                                # 'help',  # Not interactive
-                                                'hex',
-                                                'id',
-                                                # '__import__', # Not importing through this
-                                                # 'input',  # Not interactive
-                                                'int',
-                                                'isinstance',
-                                                'issubclass',
-                                                'iter',
-                                                'len',
-                                                'list',
-                                                # 'locals',  # Not needed
-                                                'map',
-                                                'max',
-                                                # 'memoryview',  # Not needed
-                                                'min',
-                                                'next',
-                                                'object',
-                                                'oct',
-                                                # 'open', # No access to fs
-                                                'ord',
-                                                'pow',
-                                                # 'print', # No access to stdin/stdout/stderr
-                                                'property',
-                                                'range',
-                                                'repr',
-                                                'reversed',
-                                                'round',
-                                                'set',
-                                                # 'setattr', # Dangerous __ thingies
-                                                'slice',
-                                                'sorted',
-                                                'staticmethod',
-                                                'str',
-                                                'sum',
-                                                'super',
-                                                'tuple',
-                                                'type',
-                                                # 'vars', # Not needed, __ thingies
-                                                'zip',
-                                            ]
-                                        },
+                                    'forbidden': [  # Avoid redefinition of allowed functions
+                                        'compile',  # Lets you do nasty things
+                                        'delattr',  # Can be used to do __ thingies
+                                        'dir',  # No instrospection
+                                        'eval',  # No random string evaluation
+                                        'exec',  # No execution
+                                        'getattr',  # Can be used for __ thingies
+                                        'globals',  # Not needed
+                                        'help',  # Not interactive
+                                        '__import__',  # Not importing through this
+                                        'input',  # Not interactive
+                                        'locals',  # Not needed
+                                        'memoryview',  # Not needed
+                                        'open',  # No access to fs
+                                        'print',  # No access to stdin/stdout/stderr
+                                        'setattr',  # Dangerous __ thingies
+                                        'vars',  # Not needed, __ thingies
                                     ]
                                 }
                             }
@@ -325,17 +277,10 @@ class SandboxAstValidator(object):
                 python_repr[field] = value
         return python_repr
 
-    def allow_defined_function_calls(self, validation_schema):
-        name_schema = validation_schema['Call']['schema']['schema']['func']['schema']['Name']['schema']
-        calls = name_schema['id']['oneof'][0]['allowed']
-        for function_def in self.current_document.get('FunctionDef', []):
-            calls.append(function_def['name'])
-
     def validate(self, node):
-        self.current_document['code'] = self.convert_node(node)
+        self.convert_node(node)
         pprint.pprint(self.current_document)
         validation_schema = copy.deepcopy(self.validation_schema)
-        self.allow_defined_function_calls(validation_schema)
         validator = get_sandbox_validator()
         validator.validate(self.current_document, schema=validation_schema)
         if validator.errors:
