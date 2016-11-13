@@ -1,9 +1,9 @@
-print('a')
+import ast, abc
 var = 'asdf'
 
 
 def print_var():
-    print(var)
+    return var
 
 
 def change_local_var():

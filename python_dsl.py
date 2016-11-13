@@ -41,13 +41,132 @@ allow_anything = {
     'schema': {},
 }
 
-default_validation_schema = {
+all_asts = [
+    'Add',
+    'alias',
+    'And',
+    'arg',
+    'arguments',
+    'Assert',
+    'Assign',
+    'AST',
+    'AsyncFor',
+    'AsyncFunctionDef',
+    'AsyncWith',
+    'Attribute',
+    'AugAssign',
+    'AugLoad',
+    'AugStore',
+    'Await',
+    'BinOp',
+    'BitAnd',
+    'BitOr',
+    'BitXor',
+    'boolop',
+    'BoolOp',
+    'Break',
+    'Bytes',
+    'Call',
+    'ClassDef',
+    'cmpop',
+    'Compare',
+    'comprehension',
+    'Continue',
+    'Del',
+    'Delete',
+    'Dict',
+    'DictComp',
+    'Div',
+    'Ellipsis',
+    'Eq',
+    'excepthandler',
+    'ExceptHandler',
+    'expr',
+    'Expr',
+    'expr_context',
+    'Expression',
+    'ExtSlice',
+    'FloorDiv',
+    'For',
+    'FunctionDef',
+    'GeneratorExp',
+    'Global',
+    'Gt',
+    'GtE',
+    'If',
+    'IfExp',
+    'Import',
+    'ImportFrom',
+    'In',
+    'Index',
+    'Interactive',
+    'Invert',
+    'Is',
+    'IsNot',
+    'keyword',
+    'Lambda',
+    'List',
+    'ListComp',
+    'Load',
+    'LShift',
+    'Lt',
+    'LtE',
+    'MatMult',
+    'mod',
+    'Mod',
+    'Module',
+    'Mult',
+    'Name',
+    'NameConstant',
+    'Nonlocal',
+    'Not',
+    'NotEq',
+    'NotIn',
+    'Num',
+    'operator',
+    'Or',
+    'Param',
+    'Pass',
+    'Pow',
+    'Raise',
+    'Return',
+    'RShift',
+    'Set',
+    'SetComp',
+    'slice',
+    'Slice',
+    'Starred',
+    'stmt',
+    'Store',
+    'Str',
+    'Sub',
+    'Subscript',
+    'Suite',
+    'Try',
+    'Tuple',
+    'UAdd',
+    'unaryop',
+    'UnaryOp',
+    'USub',
+    'While',
+    'With',
+    'withitem',
+    'Yield',
+    'YieldFrom',
+]
+
+allow_anything_schema = {a: allow_anything for a in all_asts}
+
+default_validation_schema = copy.deepcopy(allow_anything_schema)
+
+default_validation_schema.update({
     # Here the document is stored,
     'code': allow_anything,
-    # Everything is contained in a Module
-    'Module': allow_anything,
-    # Ex
-    'Expr': allow_anything,
+    # No import statements allowed
+    'Import': {
+        'type': 'list',
+        'items': []
+    },
     # We control functions to be used here
     'Call': {
         'type': 'list',
@@ -62,9 +181,84 @@ default_validation_schema = {
                             'type': 'dict',
                             'schema': {
                                 'id': {
-                                    'type': 'string',
-                                    'allowed': [
-                                        'print'
+                                    'oneof': [  # Avoid redefinition of allowed functions
+                                        {
+                                            'type': 'string',
+                                            'allowed': [],  # Defined functions
+                                        },
+                                        {
+                                            'type': 'string',
+                                            'allowed': [  # Allowed functions
+                                                'abs',
+                                                'all',
+                                                'any',
+                                                'ascii',
+                                                'bin',
+                                                'bool',
+                                                'bytearray',
+                                                'bytes',
+                                                'callable',
+                                                'chr',
+                                                'classmethod',
+                                                # 'compile', # Lets you do nasty things
+                                                'complex',
+                                                # 'delattr', # Can be used to do __ thingies
+                                                'dict',
+                                                # 'dir', # No instrospection
+                                                'divmod',
+                                                'enumerate',
+                                                # 'eval', # No random string evaluation
+                                                # 'exec', # No execution
+                                                'filter',
+                                                'float',
+                                                'format',
+                                                'frozenset',
+                                                # 'getattr', # Can be used for __ thingies
+                                                # 'globals',  # Not needed
+                                                'hasattr',  # Mixed feelings
+                                                'hash',
+                                                # 'help',  # Not interactive
+                                                'hex',
+                                                'id',
+                                                # '__import__', # Not importing through this
+                                                # 'input',  # Not interactive
+                                                'int',
+                                                'isinstance',
+                                                'issubclass',
+                                                'iter',
+                                                'len',
+                                                'list',
+                                                # 'locals',  # Not needed
+                                                'map',
+                                                'max',
+                                                # 'memoryview',  # Not needed
+                                                'min',
+                                                'next',
+                                                'object',
+                                                'oct',
+                                                # 'open', # No access to fs
+                                                'ord',
+                                                'pow',
+                                                # 'print', # No access to stdin/stdout/stderr
+                                                'property',
+                                                'range',
+                                                'repr',
+                                                'reversed',
+                                                'round',
+                                                'set',
+                                                # 'setattr', # Dangerous __ thingies
+                                                'slice',
+                                                'sorted',
+                                                'staticmethod',
+                                                'str',
+                                                'sum',
+                                                'super',
+                                                'tuple',
+                                                'type',
+                                                # 'vars', # Not needed, __ thingies
+                                                'zip',
+                                            ]
+                                        },
                                     ]
                                 }
                             }
@@ -74,19 +268,20 @@ default_validation_schema = {
             }
         }
     },
-    'Name': allow_anything,
-    # Loading variables is important
-    'Load': allow_anything,
-    # Strings shouldn't be a problem
-    'Str': allow_anything,
-    # Assignation is really needed
-    'Assign': allow_anything,
-    'Store': allow_anything,
-    'FunctionDef': allow_anything,
-    'Num': allow_anything,
-    'Global': allow_anything,
-    'arguments': allow_anything,
-}
+    # Attribute access should be really constrained
+    'Attribute': {
+        'type': 'list',
+        'schema': {
+            'type': 'dict',
+            'schema': {
+                'attr': {
+                    'type': 'string',
+                    'regex': r'^(?!_).*$',  # We don't let the underscore starting attributes
+                }
+            }
+        }
+    },
+})
 
 _sandbox_validator = None
 
@@ -96,9 +291,6 @@ def get_sandbox_validator():
     if _sandbox_validator:
         return _sandbox_validator
     _sandbox_validator = Validator(allow_unknown=False)
-    # _sandbox_validator.schema_registry.extend({
-    #     'anything': anything_schema
-    # })
     return _sandbox_validator
 
 
@@ -134,7 +326,8 @@ class SandboxAstValidator(object):
         return python_repr
 
     def allow_defined_function_calls(self, validation_schema):
-        calls = validation_schema['Call']['schema']['schema']['func']['schema']['Name']['schema']['id']['allowed']
+        name_schema = validation_schema['Call']['schema']['schema']['func']['schema']['Name']['schema']
+        calls = name_schema['id']['oneof'][0]['allowed']
         for function_def in self.current_document.get('FunctionDef', []):
             calls.append(function_def['name'])
 
